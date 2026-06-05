@@ -142,7 +142,7 @@ def markdown_to_html(md_text: str) -> str:
     )
     body_html = renderer.convert(md_text)
     body_html = render_task_list_items(body_html)
-    body_html = badge_status_icons_in_tables(body_html)
+    body_html = wrap_status_icons(body_html)
     return enhance_wide_tables(body_html)
 
 
@@ -177,61 +177,52 @@ def enhance_wide_tables(body_html: str) -> str:
     return re.sub(r"<table\b.*?</table>", wrap, body_html, flags=re.IGNORECASE | re.DOTALL)
 
 
-# Status icon glyphs that are visually meaningful but layout-risky in PDFs: they
-# rely on symbol/emoji fonts that may be missing (rendering as tofu) and their
-# advance widths break fixed table layouts. Inside table cells we replace them
-# with plain-text CSS badges that read identically without any special font.
-_POSITIVE_ICONS = "✓✔☑✅√"
-_NEGATIVE_ICONS = "✗✘☒❌"
-_WARNING_ICONS = "⚠⚠️"
+# Status / symbol glyphs that the user wants kept as real icons (not text labels).
+# In a PDF these depend on a symbol or emoji font; the system default sans/CJK
+# stack does not cover them, so they render as tofu boxes. We keep the glyph and
+# wrap it in a span bound to the bundled icon fonts so the glyph is preserved and
+# always has a font that draws it.
+#
+# The two groups exist because no single bundled font covers everything AND
+# because WeasyPrint, left to its own font matching, routes emoji-presentation
+# codepoints (✅ ❌) to a system *color* emoji font (Noto Color Emoji) which it
+# then renders as blank/tofu. To stop that, emoji-presentation icons get a font
+# stack that contains ONLY the bundled monochrome Noto Emoji (no color-emoji
+# family is reachable), while the line-art symbols use Noto Sans Symbols 2.
+_EMOJI_ICONS = "✅❌❗❓"          # emoji-presentation marks -> bundled Noto Emoji
+_SYMBOL_ICONS = "✓✔☑√✗✘☒⚠⭐★☆►▶◆◇●○■□▲▼✦✧"  # line-art marks -> Noto Sans Symbols 2
 
-# Bilingual labels so the badge reads naturally in CJK and English documents
-# alike. The glyph carries a yes/no/warn meaning; the label preserves it.
-_BADGE_LABEL = {
-    "yes": "是 / Yes",
-    "no": "否 / No",
-    "warn": "注意 / Note",
-}
+# U+FE0F (emoji variation selector) requests a colorful emoji presentation. Our
+# bundled Noto Emoji is monochrome and WeasyPrint has no color-emoji pipeline, so
+# a stray FE0F can leave an empty advance or a tofu box next to the glyph. We drop
+# FE0F that trails one of our icons; the base glyph still renders as a clean icon.
+_ICON_THEN_FE0F = re.compile(f"([{re.escape(_EMOJI_ICONS + _SYMBOL_ICONS)}])️")
+_EMOJI_GLYPH = re.compile(f"([{re.escape(_EMOJI_ICONS)}])")
+_SYMBOL_GLYPH = re.compile(f"([{re.escape(_SYMBOL_ICONS)}])")
 
 
-def _status_badge(kind: str) -> str:
-    return f'<span class="status-badge status-{kind}">{html.escape(_BADGE_LABEL[kind])}</span>'
+def wrap_status_icons(body_html: str) -> str:
+    """Keep status/symbol glyphs as icons and bind them to the bundled icon fonts.
 
+    The glyphs are preserved verbatim (no text-label substitution). Each icon is
+    wrapped in a span whose class selects a bundled font that actually contains
+    the glyph, guaranteeing a real icon instead of a tofu box (or a blank
+    color-emoji cell) regardless of the host system's installed fonts.
 
-def badge_status_icons_in_tables(body_html: str) -> str:
-    """Replace check/cross/warning icon glyphs inside table cells with text badges.
-
-    Only cell content is touched so legitimate uses elsewhere (prose, code-block
-    diagrams) are preserved. A cell that is *only* a status icon becomes a single
-    badge; a glyph embedded in other text is swapped for the badge inline.
+    Fenced code and inline code are left untouched so ASCII diagrams or literal
+    examples inside ``<pre>``/``<code>`` keep their exact characters.
     """
 
-    icon_class = f"[{re.escape(_POSITIVE_ICONS + _NEGATIVE_ICONS + _WARNING_ICONS)}️]"
+    segments = re.split(r"(<pre\b.*?</pre>|<code\b.*?</code>)", body_html, flags=re.IGNORECASE | re.DOTALL)
 
-    def classify(glyph: str) -> str:
-        if glyph in _POSITIVE_ICONS:
-            return "yes"
-        if glyph in _NEGATIVE_ICONS:
-            return "no"
-        return "warn"
+    def transform(text: str) -> str:
+        text = _ICON_THEN_FE0F.sub(r"\1", text)
+        text = _EMOJI_GLYPH.sub(r'<span class="icon-emoji">\1</span>', text)
+        return _SYMBOL_GLYPH.sub(r'<span class="icon-symbol">\1</span>', text)
 
-    def swap_in_cell(cell: re.Match) -> str:
-        open_tag, inner, close_tag = cell.group(1), cell.group(2), cell.group(3)
-        if not re.search(icon_class, inner):
-            return cell.group(0)
-        new_inner = re.sub(
-            icon_class,
-            lambda m: _status_badge(classify(m.group(0).rstrip("️"))),
-            inner,
-        )
-        return f"{open_tag}{new_inner}{close_tag}"
-
-    return re.sub(
-        r"(<t[dh]\b[^>]*>)(.*?)(</t[dh]>)",
-        swap_in_cell,
-        body_html,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
+    for i in range(0, len(segments), 2):  # even indices are the non-code segments
+        segments[i] = transform(segments[i])
+    return "".join(segments)
 
 
 def render_task_list_items(body_html: str) -> str:
@@ -288,11 +279,29 @@ def normalize_citation_markers(md_text: str) -> str:
     return re.sub(r"\[\^([A-Za-z0-9_-]+)\]", r'<sup class="ref-marker">[\1]</sup>', md_text)
 
 
-def css(palette: dict[str, str], density: dict[str, str], title: str, team_name: str, slogan: str) -> str:
+def css(palette: dict[str, str], density: dict[str, str], title: str, team_name: str, slogan: str, font_dir: Path) -> str:
     escaped_team = team_name.replace("\\", "\\\\").replace('"', '\\"')
     escaped_slogan = slogan.replace("\\", "\\\\").replace('"', '\\"')
     escaped_title = title.replace("\\", "\\\\").replace('"', '\\"')
+    symbols2_url = (font_dir / "NotoSansSymbols2-Regular.ttf").as_uri()
+    emoji_url = (font_dir / "NotoEmoji-Regular.ttf").as_uri()
     return f"""
+    /* Bundled OFL icon fonts so status glyphs (check/cross/warning/star) always
+       render as real icons in the PDF instead of tofu boxes, independent of the
+       host system's installed fonts. See assets/fonts/FONT-LICENSES.md. */
+    @font-face {{
+      font-family: "IconSymbols";
+      src: url("{symbols2_url}") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+    }}
+    @font-face {{
+      font-family: "IconEmoji";
+      src: url("{emoji_url}") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+    }}
+
     @page {{
       size: A4;
       margin: {density["margin"]};
@@ -332,7 +341,7 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "PingFang SC",
         "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC",
-        "WenQuanYi Micro Hei", Arial, sans-serif;
+        "WenQuanYi Micro Hei", Arial, "IconSymbols", "IconEmoji", sans-serif;
       color: {palette["text"]};
       font-size: {density["body"]};
       line-height: {density["line"]};
@@ -603,21 +612,26 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
       margin: 9mm 0;
     }}
 
-    .status-badge {{
-      display: inline-block;
-      padding: 0.05em 0.55em;
-      border-radius: 999px;
-      font-size: 0.82em;
-      font-weight: 700;
-      line-height: 1.5;
+    /* Status/symbol icons keep their glyph and are bound to a bundled font that
+       contains it. Emoji-presentation marks (✅ ❌) use ONLY the bundled
+       monochrome Noto Emoji so WeasyPrint cannot fall back to a system color
+       emoji font (which it renders blank). Line-art marks use Noto Sans Symbols
+       2 with the emoji font as a secondary fallback. */
+    .icon-emoji {{
+      font-family: "IconEmoji";
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
       white-space: nowrap;
     }}
 
-    .status-yes {{ background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }}
-    .status-no {{ background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }}
-    .status-warn {{ background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }}
-
-    th .status-badge {{ color: inherit; }}
+    .icon-symbol {{
+      font-family: "IconSymbols", "IconEmoji";
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+      white-space: nowrap;
+    }}
 
     ul:has(> li.task-item) {{ list-style: none; padding-left: 2mm; }}
 
@@ -684,7 +698,8 @@ def build_document(md_text: str, args: argparse.Namespace, input_path: Path) -> 
     density = DENSITY[args.density]
     body_html = markdown_to_html(md_text)
     toc_html = build_toc(md_text) if args.toc else ""
-    doc_css = css(palette, density, title, args.team_name, args.slogan)
+    font_dir = Path(__file__).resolve().parent.parent / "assets" / "fonts"
+    doc_css = css(palette, density, title, args.team_name, args.slogan, font_dir)
 
     return f"""<!doctype html>
 <html lang="{html.escape(args.language)}">
@@ -721,6 +736,61 @@ def build_document(md_text: str, args: argparse.Namespace, input_path: Path) -> 
 """
 
 
+# System *color* emoji fonts (CBDT/COLR bitmap fonts). WeasyPrint has no
+# color-emoji rasterization pipeline and does per-glyph fallback to these for
+# emoji-presentation codepoints (✅ ❌) even when CSS asks for another font,
+# leaving blank/tofu cells. We reject them at the fontconfig level for the render
+# so the engine falls through to the bundled monochrome Noto Emoji instead.
+_COLOR_EMOJI_FAMILIES = [
+    "Noto Color Emoji",
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Twemoji",
+    "EmojiOne",
+    "JoyPixels",
+]
+
+
+def _emoji_safe_fontconfig() -> "tuple[object, str | None]":
+    """Build a temp fontconfig file that rejects system color-emoji fonts.
+
+    Returns (tempfile_handle, path). The handle is kept alive by the caller so the
+    file is not deleted before WeasyPrint reads it. Returns (None, None) if a host
+    fonts.conf cannot be located, in which case rendering proceeds with defaults.
+    """
+    import tempfile
+
+    candidates = [
+        os.environ.get("FONTCONFIG_FILE"),
+        "/etc/fonts/fonts.conf",
+        "/usr/local/etc/fonts/fonts.conf",
+        "/opt/homebrew/etc/fonts/fonts.conf",
+    ]
+    base_conf = next((c for c in candidates if c and Path(c).exists()), None)
+    if base_conf is None:
+        return None, None
+
+    rejects = "\n".join(
+        f'    <rejectfont><pattern><patelt name="family">'
+        f"<string>{fam}</string></patelt></pattern></rejectfont>"
+        for fam in _COLOR_EMOJI_FAMILIES
+    )
+    conf = (
+        '<?xml version="1.0"?>\n'
+        '<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
+        "<fontconfig>\n"
+        f'  <include ignore_missing="yes">{html.escape(base_conf)}</include>\n'
+        "  <selectfont>\n"
+        f"{rejects}\n"
+        "  </selectfont>\n"
+        "</fontconfig>\n"
+    )
+    handle = tempfile.NamedTemporaryFile("w", suffix=".conf", delete=False, encoding="utf-8")
+    handle.write(conf)
+    handle.flush()
+    return handle, handle.name
+
+
 def write_pdf(html_text: str, output_pdf: Path, base_url: Path) -> bool:
     try:
         from weasyprint import HTML
@@ -737,7 +807,24 @@ def write_pdf(html_text: str, output_pdf: Path, base_url: Path) -> bool:
             print(f"WeasyPrint unavailable, skipping PDF render: {install_exc}", file=sys.stderr)
             return False
 
-    HTML(string=html_text, base_url=str(base_url)).write_pdf(str(output_pdf))
+    handle, conf_path = _emoji_safe_fontconfig()
+    previous = os.environ.get("FONTCONFIG_FILE")
+    if conf_path:
+        os.environ["FONTCONFIG_FILE"] = conf_path
+    try:
+        HTML(string=html_text, base_url=str(base_url)).write_pdf(str(output_pdf))
+    finally:
+        if conf_path:
+            if previous is None:
+                os.environ.pop("FONTCONFIG_FILE", None)
+            else:
+                os.environ["FONTCONFIG_FILE"] = previous
+            handle.close()
+            try:
+                os.unlink(conf_path)
+            except OSError:
+                pass
+
     set_pdf_metadata(output_pdf)
     return True
 
