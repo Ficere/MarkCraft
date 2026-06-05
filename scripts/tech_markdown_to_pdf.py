@@ -140,7 +140,38 @@ def markdown_to_html(md_text: str) -> str:
         },
         output_format="html5",
     )
-    return renderer.convert(md_text)
+    return enhance_wide_tables(renderer.convert(md_text))
+
+
+# Tables with at least this many columns are rendered on a wide landscape page so
+# that content-sized columns have room to breathe instead of being squeezed into
+# uniform narrow columns that shred CJK text and English tokens alike.
+WIDE_TABLE_MIN_COLUMNS = 5
+
+
+def enhance_wide_tables(body_html: str) -> str:
+    """Wrap wide tables so they render on landscape pages with content-sized columns.
+
+    The default fixed equal-width layout works for 2-4 column tables but forces
+    severe wrapping on 5+ column tables (model names break mid-word, parentheses and
+    English tokens fragment). Detect those tables and tag them for landscape layout.
+    """
+
+    def column_count(table_html: str) -> int:
+        header = re.search(r"<thead\b[^>]*>(.*?)</thead>", table_html, re.IGNORECASE | re.DOTALL)
+        scope = header.group(1) if header else table_html
+        first_row = re.search(r"<tr\b[^>]*>(.*?)</tr>", scope, re.IGNORECASE | re.DOTALL)
+        if not first_row:
+            return 0
+        return len(re.findall(r"<t[hd]\b", first_row.group(1), re.IGNORECASE))
+
+    def wrap(match: re.Match) -> str:
+        table_html = match.group(0)
+        if column_count(table_html) < WIDE_TABLE_MIN_COLUMNS:
+            return table_html
+        return f'<div class="wide-table-page">{table_html}</div>'
+
+    return re.sub(r"<table\b.*?</table>", wrap, body_html, flags=re.IGNORECASE | re.DOTALL)
 
 
 def clean_invisible_characters(md_text: str) -> str:
@@ -198,6 +229,15 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
         font-size: 8.5pt;
         color: {palette["muted"]};
       }}
+    }}
+
+    @page wide {{
+      size: A4 landscape;
+      margin: 14mm 15mm 15mm 15mm;
+      @top-left {{ content: "{escaped_team}"; font-size: 8.5pt; color: {palette["muted"]}; }}
+      @top-right {{ content: "{escaped_title}"; font-size: 8.5pt; color: {palette["muted"]}; }}
+      @bottom-left {{ content: "{escaped_slogan}"; font-size: 8pt; color: {palette["muted"]}; }}
+      @bottom-right {{ content: counter(page); font-size: 8.5pt; color: {palette["muted"]}; }}
     }}
 
     * {{ box-sizing: border-box; }}
@@ -406,6 +446,30 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
       page-break-inside: avoid;
       break-inside: avoid;
     }}
+
+    /* Wide tables (5+ columns) render on a landscape page with content-sized
+       columns so model names, parentheses, and English tokens stay intact while
+       Chinese prose still wraps naturally. */
+    .wide-table-page {{
+      page: wide;
+      page-break-before: always;
+      page-break-after: always;
+    }}
+
+    .wide-table-page table {{
+      table-layout: auto;
+      font-size: 8.6pt;
+    }}
+
+    .wide-table-page th,
+    .wide-table-page td {{
+      padding: 1.8mm 2.2mm;
+      word-break: keep-all;
+      overflow-wrap: normal;
+      hyphens: manual;
+    }}
+
+    .wide-table-page a {{ overflow-wrap: normal; word-break: keep-all; }}
 
     code {{
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;

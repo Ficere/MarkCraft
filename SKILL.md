@@ -61,6 +61,7 @@ Collect or infer these inputs:
    - Keep line length readable.
    - Add page-break control around headings, tables, images, and code blocks.
    - Render tables left-aligned with zebra striping and sufficient padding.
+   - Wide tables (5+ columns) automatically render on a landscape page with content-sized columns so CJK text, parentheses, and English/model tokens stay intact.
    - Render code blocks with monospaced fonts and syntax highlighting.
    - Use callout styling for blockquotes and important notes.
 
@@ -153,7 +154,7 @@ A successful output should:
 - If `weasyprint` is missing, install Python dependencies or use `--html-only`.
 - If system libraries for PDF rendering are unavailable, generate HTML and print it to PDF from a browser.
 - If Chinese text appears as tofu boxes, install or select a CJK-capable font such as PingFang SC, Microsoft YaHei, Noto Sans CJK, Source Han Sans, or WenQuanYi Micro Hei.
-- If tables overflow, retry with `--density compact` or manually simplify very wide tables.
+- Tables with 5+ columns are detected automatically and rendered on a landscape page with content-sized columns; for tables with extremely long cell text that still feels cramped, retry with `--density compact` or simplify the content.
 - If code blocks overflow, keep horizontal scrolling in HTML or reduce font size slightly in PDF.
 
 ## Example User Prompts
