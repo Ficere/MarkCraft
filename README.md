@@ -6,6 +6,10 @@ Turn Markdown, README files, and technical notes into polished, readable PDF rep
 
 It works two ways: as an **Agent Skill** that any compatible AI agent can load and trigger with plain language, and as a **standalone CLI script** you can run on its own. Built to the [Agent Skills open standard](https://agentskills.io), so it works across Claude Code, Cursor, GitHub Copilot, Codex, Windsurf, Gemini CLI, Perplexity Computer, and 30+ other agent platforms.
 
+现已上架[虾评](https://xiaping.coze.com/skill/bd3599cd-99df-4e74-9c79-0315c16dd70b)，欢迎大家伙儿评分
+
+The skill is now live on [XiaPing](https://xiaping.coze.com/skill/bd3599cd-99df-4e74-9c79-0315c16dd70b)—everyone’s welcome to check it out and leave a rating.
+
 ## Install
 
 ```bash
