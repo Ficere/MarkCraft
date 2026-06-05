@@ -116,6 +116,7 @@ def markdown_to_html(md_text: str) -> str:
     require_markdown()
     import markdown
 
+    md_text = clean_invisible_characters(md_text)
     md_text = normalize_citation_markers(md_text)
 
     renderer = markdown.Markdown(
@@ -140,6 +141,25 @@ def markdown_to_html(md_text: str) -> str:
         output_format="html5",
     )
     return renderer.convert(md_text)
+
+
+def clean_invisible_characters(md_text: str) -> str:
+    """Remove or normalize invisible characters that commonly damage PDF layout."""
+    replacements = {
+        "\ufeff": "",
+        "\u200b": "",
+        "\u200c": "",
+        "\u200d": "",
+        "\u2060": "",
+        "\u00ad": "",
+        "\u00a0": " ",
+        "\u3000": " ",
+    }
+    for src, dst in replacements.items():
+        md_text = md_text.replace(src, dst)
+    md_text = md_text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = [line.rstrip() for line in md_text.split("\n")]
+    return "\n".join(lines)
 
 
 def normalize_citation_markers(md_text: str) -> str:
@@ -356,17 +376,18 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
 
     table {{
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       margin: 5mm 0 6mm 0;
       font-size: 9.6pt;
-      page-break-inside: avoid;
-      break-inside: avoid;
+      text-align: left;
     }}
 
     th {{
       background: linear-gradient(90deg, {palette["accent_bg"]}, {palette["secondary"]});
       color: white;
       font-weight: 700;
+      text-align: left !important;
     }}
 
     th, td {{
@@ -374,9 +395,17 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
       padding: 2.4mm 2.8mm;
       vertical-align: top;
       overflow-wrap: anywhere;
+      word-break: normal;
+      hyphens: auto;
+      text-align: left !important;
     }}
 
     tr:nth-child(even) td {{ background: #F8FAFC; }}
+
+    tr {{
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }}
 
     code {{
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;

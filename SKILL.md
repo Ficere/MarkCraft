@@ -1,6 +1,6 @@
 ---
 name: markdown-to-pdf-tech
-description: "Convert Markdown documents into polished, readable PDF reports with a technology-style visual theme. Use when the user asks to turn .md, Markdown, README, technical notes, product docs, research briefs, proposals, or long-form documentation into a PDF with custom team name, slogan, brand accents, Chinese/CJK support, readable typography, code blocks, tables, citations, and professional layout."
+description: "Convert Markdown documents into polished, readable PDF reports with a technology-style visual theme. Use when the user asks to turn .md, Markdown, README, technical notes, product docs, research briefs, proposals, or long-form documentation into a PDF with readable typography, code blocks, left-aligned tables, citations, Chinese/CJK support, and professional layout. Optional team name and slogan can be added as decorative branding on the cover, header, and footer."
 license: MIT
 compatibility: "Python 3.10+. Optional dependencies: markdown, pygments, weasyprint. Falls back to HTML output if PDF rendering dependencies are unavailable."
 metadata:
@@ -15,8 +15,8 @@ metadata:
 Use this skill when the user wants to:
 
 - Convert Markdown files into polished PDF reports, technical documents, whitepapers, SOPs, README exports, product specs, research briefs, meeting notes, or proposals.
-- Add a custom team name and slogan as visual decoration in the cover, header, footer, or watermark.
 - Produce a technology-style PDF with dark blue, cyan, violet, slate, grid, glow, or gradient accents.
+- Optionally add a custom team name and slogan as visual decoration in the cover, header, footer, or watermark.
 - Improve readability through better typography, spacing, section hierarchy, tables, code blocks, callouts, and page breaks.
 - Preserve Chinese/CJK text quality and mixed Chinese-English technical writing.
 
@@ -24,10 +24,9 @@ Do not use this skill for slide-deck-first outputs unless the user explicitly as
 
 ## Core Behavior
 
-When invoked, create a production-ready PDF from the provided Markdown while preserving the Markdown's meaning and improving document readability. Ask for missing brand details only if they materially affect the output. If the user does not provide team name or slogan, use neutral defaults:
+When invoked, create a production-ready PDF from the provided Markdown while preserving the Markdown's meaning and improving document readability. Readability and clean layout are the core deliverable; team name and slogan are optional decoration, not requirements.
 
-- Team name: `AI Science Team`
-- Slogan: `From Markdown to Knowledge`
+Team name and slogan are optional. Do not ask for them — if the user wants branding they will say so. When the user provides neither and asks for none, the script applies neutral defaults (team name `AI Science Team`, slogan `From Markdown to Knowledge`) so the cover and header still look finished. If a user wants a clean, unbranded look, pass empty values to suppress the badge and slogan.
 
 Prefer a clean, restrained technology style over decorative clutter. The document should feel like a professional technical report, not a poster.
 
@@ -35,10 +34,10 @@ Prefer a clean, restrained technology style over decorative clutter. The documen
 
 Collect or infer these inputs:
 
-- `input_md`: Markdown file path or Markdown text.
+- `input_md`: Markdown file path or Markdown text. **Required** — this is the only input you actually need.
 - `output_pdf`: desired PDF filename. Default to the input filename with `.pdf`.
-- `team_name`: custom team, lab, department, company, or project name.
-- `slogan`: short slogan, mission line, or document tagline.
+- `team_name` *(optional)*: custom team, lab, department, company, or project name. Decorative only.
+- `slogan` *(optional)*: short slogan, mission line, or document tagline. Decorative only.
 - `language`: `zh`, `en`, or `mixed`. Default to `mixed`.
 - `style`: default `tech`. Optional variants: `deep-blue`, `cyan-violet`, `slate-minimal`, `bio-ai`.
 - `density`: default `normal`. Optional variants: `compact` for long documents and `spacious` for executive-facing reports.
@@ -52,6 +51,7 @@ Collect or infer these inputs:
 
 2. Normalize the document.
    - Keep user content intact unless asked to edit.
+   - The script strips invisible characters (BOM, zero-width spaces, non-breaking spaces) that otherwise damage layout; no manual cleanup needed.
    - Add a title block only if the document has no cover/title.
    - Preserve citation URLs and links.
    - Avoid changing technical terms, formulas, gene/protein names, chemical names, or code.
@@ -60,16 +60,16 @@ Collect or infer these inputs:
    - Use clear heading hierarchy.
    - Keep line length readable.
    - Add page-break control around headings, tables, images, and code blocks.
-   - Render tables with zebra striping and sufficient padding.
+   - Render tables left-aligned with zebra striping and sufficient padding.
    - Render code blocks with monospaced fonts and syntax highlighting.
    - Use callout styling for blockquotes and important notes.
 
-4. Apply brand decoration.
+4. Apply optional brand decoration (only when the user wants branding).
    - Put the team name and slogan on the cover.
    - Put the team name in the running header.
    - Put the slogan or document title in the footer when space allows.
    - Add subtle geometric accents, gradient lines, or grid backgrounds.
-   - Do not let decoration reduce readability.
+   - Do not let decoration reduce readability. When no branding is requested, a clean unbranded layout is a perfectly valid result.
 
 5. Generate PDF.
    - Prefer the bundled script: `scripts/tech_markdown_to_pdf.py`.
@@ -78,29 +78,28 @@ Collect or infer these inputs:
 6. QA before sharing.
    - Confirm the PDF exists and has nonzero size.
    - Open or inspect the first pages if possible.
-   - Check CJK characters, headings, tables, code blocks, page numbers, links, and brand text.
+   - Check CJK characters, headings, tables, code blocks, page numbers, links, and any brand text that was requested.
    - If the PDF is a formal deliverable, share the final file with the user.
 
 ## Bundled Script Usage
 
-Use the bundled script from the skill directory:
+Use the bundled script from the skill directory. The only required argument is the input file:
 
 ```bash
+python scripts/tech_markdown_to_pdf.py input.md --output report.pdf
+```
+
+Useful options (team name and slogan are optional decoration):
+
+```bash
+python scripts/tech_markdown_to_pdf.py input.md --style cyan-violet --density spacious --no-toc
+python scripts/tech_markdown_to_pdf.py input.md --team-name "Platform Team" --slogan "Build, Measure, Learn"
 python scripts/tech_markdown_to_pdf.py input.md \
-  --output output.pdf \
   --team-name "Deep Potential" \
   --slogan "AI for Science" \
   --style bio-ai \
   --density normal \
   --toc
-```
-
-Useful options:
-
-```bash
-python scripts/tech_markdown_to_pdf.py input.md --output report.pdf
-python scripts/tech_markdown_to_pdf.py input.md --team-name "Platform Team" --slogan "Build, Measure, Learn"
-python scripts/tech_markdown_to_pdf.py input.md --style cyan-violet --density spacious --no-toc
 python scripts/tech_markdown_to_pdf.py input.md --html-only
 ```
 
@@ -142,7 +141,7 @@ The workflow should support:
 A successful output should:
 
 - Produce a PDF that can be opened without errors.
-- Display the team name and slogan correctly.
+- Display the team name and slogan correctly when branding was requested.
 - Maintain readable typography and spacing across the whole document.
 - Preserve Markdown structure and links.
 - Avoid awkward page breaks after headings or inside tables/code when possible.
@@ -159,7 +158,8 @@ A successful output should:
 
 ## Example User Prompts
 
-- “把这个 README 转成 PDF，团队名用 Deep Potential，slogan 用 AI for Science，科技风。”
 - “把这份 Markdown 技术方案排成可读性更好的 PDF。”
+- “Convert this README to a clean, readable PDF.”
+- “Convert this Markdown research brief to a polished tech-style PDF, deep-blue theme.”
+- “把这个 README 转成 PDF，团队名用 Deep Potential，slogan 用 AI for Science，科技风。”
 - “生成一份带团队名称和口号页眉页脚的 PDF 报告。”
-- “Convert this Markdown research brief to a polished tech-style PDF.”
