@@ -38,6 +38,7 @@ Collect or infer these inputs:
 - `output_pdf`: desired PDF filename. Default to the input filename with `.pdf`.
 - `team_name` *(optional)*: custom team, lab, department, company, or project name. Decorative only.
 - `slogan` *(optional)*: short slogan, mission line, or document tagline. Decorative only.
+- `author` *(optional)*: document author written to PDF `/Author` metadata and the HTML `<meta name="author">`. Resolved in order: `--author`, `MARKCRAFT_AUTHOR` env, the `author` key in the config file (`~/.config/markcraft/config`, override path with `MARKCRAFT_CONFIG`), then the default `Perplexity Computer`. `team_name` is decorative and is never used as the author.
 - `language`: `zh`, `en`, or `mixed`. Default to `mixed`.
 - `style`: default `tech`. Optional variants: `deep-blue`, `cyan-violet`, `slate-minimal`, `bio-ai`.
 - `density`: default `normal`. Optional variants: `compact` for long documents and `spacious` for executive-facing reports.
@@ -95,6 +96,8 @@ Useful options (team name and slogan are optional decoration):
 ```bash
 python scripts/markcraft.py input.md --style cyan-violet --density spacious --no-toc
 python scripts/markcraft.py input.md --team-name "Platform Team" --slogan "Build, Measure, Learn"
+python scripts/markcraft.py input.md --author "Jane Doe"
+MARKCRAFT_AUTHOR="Jane Doe" python scripts/markcraft.py input.md
 python scripts/markcraft.py input.md \
   --team-name "Deep Potential" \
   --slogan "AI for Science" \

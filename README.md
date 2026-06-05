@@ -113,8 +113,18 @@ python scripts/markcraft.py report.md --style cyan-violet --density compact
 # Add optional branding
 python scripts/markcraft.py report.md --team-name "Research Ops" --slogan "Readable by design"
 
+# Set the document author (PDF /Author and HTML <meta name="author">)
+python scripts/markcraft.py report.md --author "Jane Doe"
+MARKCRAFT_AUTHOR="Jane Doe" python scripts/markcraft.py report.md
+
 # Emit HTML only (no PDF dependencies needed)
 python scripts/markcraft.py report.md --html-only
+```
+
+The author written into the PDF metadata is resolved in this order: `--author`, the `MARKCRAFT_AUTHOR` environment variable, the `author` key in the config file (`~/.config/markcraft/config`, or the path in `MARKCRAFT_CONFIG`), then the default `Perplexity Computer`. The decorative `--team-name` is never used as the author. The config file uses simple `key = value` lines:
+
+```ini
+author = Jane Doe
 ```
 
 Dependencies:

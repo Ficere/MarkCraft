@@ -14,6 +14,54 @@ import sys
 from pathlib import Path
 
 
+DEFAULT_AUTHOR = "Perplexity Computer"
+
+
+def _config_path() -> Path:
+    """Location of the optional user config file (key = value lines)."""
+    override = os.environ.get("MARKCRAFT_CONFIG")
+    if override:
+        return Path(override).expanduser()
+    base = os.environ.get("XDG_CONFIG_HOME") or os.path.join(Path.home(), ".config")
+    return Path(base) / "markcraft" / "config"
+
+
+def _config_value(key: str) -> str | None:
+    """Read a single `key = value` entry from the user config file, if present."""
+    path = _config_path()
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, _, value = line.partition("=")
+        if name.strip() == key:
+            return value.strip().strip('"').strip("'")
+    return None
+
+
+def resolve_author(explicit: str | None) -> str:
+    """Resolve the PDF/document author.
+
+    Precedence: explicit --author, then MARKCRAFT_AUTHOR env, then the `author`
+    key in the user config file, then the built-in default. team_name is
+    intentionally not used as a fallback so branding does not silently change
+    document authorship.
+    """
+    if explicit is not None:
+        return explicit
+    env = os.environ.get("MARKCRAFT_AUTHOR")
+    if env:
+        return env
+    cfg = _config_value("author")
+    if cfg:
+        return cfg
+    return DEFAULT_AUTHOR
+
+
 STYLE_PRESETS = {
     "tech": {
         "primary": "#00AEEF",
@@ -707,7 +755,7 @@ def build_document(md_text: str, args: argparse.Namespace, input_path: Path) -> 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(title)}</title>
-  <meta name="author" content="Perplexity Computer">
+  <meta name="author" content="{html.escape(resolve_author(args.author))}">
   <style>{doc_css}</style>
 </head>
 <body>
@@ -791,7 +839,7 @@ def _emoji_safe_fontconfig() -> "tuple[object, str | None]":
     return handle, handle.name
 
 
-def write_pdf(html_text: str, output_pdf: Path, base_url: Path) -> bool:
+def write_pdf(html_text: str, output_pdf: Path, base_url: Path, author: str) -> bool:
     try:
         from weasyprint import HTML
     except Exception as exc:
@@ -825,11 +873,11 @@ def write_pdf(html_text: str, output_pdf: Path, base_url: Path) -> bool:
             except OSError:
                 pass
 
-    set_pdf_metadata(output_pdf)
+    set_pdf_metadata(output_pdf, author)
     return True
 
 
-def set_pdf_metadata(output_pdf: Path) -> None:
+def set_pdf_metadata(output_pdf: Path, author: str) -> None:
     try:
         from pypdf import PdfReader, PdfWriter
     except Exception:
@@ -852,7 +900,7 @@ def set_pdf_metadata(output_pdf: Path) -> None:
     title = existing.get("/Title") or output_pdf.stem
     writer.add_metadata({
         "/Title": str(title),
-        "/Author": "Perplexity Computer",
+        "/Author": author,
         "/Producer": "WeasyPrint + pypdf",
     })
     with output_pdf.open("wb") as f:
@@ -865,6 +913,17 @@ def main() -> int:
     parser.add_argument("--output", "-o", help="Output PDF path")
     parser.add_argument("--team-name", default="AI Science Team", help="Team, lab, department, or project name")
     parser.add_argument("--slogan", default="From Markdown to Knowledge", help="Short slogan shown on cover/footer")
+    parser.add_argument(
+        "--author",
+        default=None,
+        help=(
+            "Document author for PDF metadata and HTML <meta>. Precedence: "
+            "--author, then MARKCRAFT_AUTHOR env, then the 'author' key in the "
+            "config file (default ~/.config/markcraft/config, override with "
+            f"MARKCRAFT_CONFIG), then '{DEFAULT_AUTHOR}'. team_name is never used "
+            "as the author fallback."
+        ),
+    )
     parser.add_argument("--title", help="Override document title")
     parser.add_argument("--date", help="Override cover date, default today")
     parser.add_argument("--language", default="mixed", choices=["zh", "en", "mixed"], help="Document language hint")
@@ -890,7 +949,7 @@ def main() -> int:
     if args.html_only:
         return 0
 
-    ok = write_pdf(html_text, output_pdf, input_path.parent)
+    ok = write_pdf(html_text, output_pdf, input_path.parent, resolve_author(args.author))
     if not ok:
         print(f"PDF not generated. Use the HTML fallback: {output_html}", file=sys.stderr)
         return 1
