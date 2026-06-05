@@ -140,7 +140,10 @@ def markdown_to_html(md_text: str) -> str:
         },
         output_format="html5",
     )
-    return enhance_wide_tables(renderer.convert(md_text))
+    body_html = renderer.convert(md_text)
+    body_html = render_task_list_items(body_html)
+    body_html = badge_status_icons_in_tables(body_html)
+    return enhance_wide_tables(body_html)
 
 
 # Tables with at least this many columns are rendered on a wide landscape page so
@@ -172,6 +175,90 @@ def enhance_wide_tables(body_html: str) -> str:
         return f'<div class="wide-table-page">{table_html}</div>'
 
     return re.sub(r"<table\b.*?</table>", wrap, body_html, flags=re.IGNORECASE | re.DOTALL)
+
+
+# Status icon glyphs that are visually meaningful but layout-risky in PDFs: they
+# rely on symbol/emoji fonts that may be missing (rendering as tofu) and their
+# advance widths break fixed table layouts. Inside table cells we replace them
+# with plain-text CSS badges that read identically without any special font.
+_POSITIVE_ICONS = "✓✔☑✅√"
+_NEGATIVE_ICONS = "✗✘☒❌"
+_WARNING_ICONS = "⚠⚠️"
+
+# Bilingual labels so the badge reads naturally in CJK and English documents
+# alike. The glyph carries a yes/no/warn meaning; the label preserves it.
+_BADGE_LABEL = {
+    "yes": "是 / Yes",
+    "no": "否 / No",
+    "warn": "注意 / Note",
+}
+
+
+def _status_badge(kind: str) -> str:
+    return f'<span class="status-badge status-{kind}">{html.escape(_BADGE_LABEL[kind])}</span>'
+
+
+def badge_status_icons_in_tables(body_html: str) -> str:
+    """Replace check/cross/warning icon glyphs inside table cells with text badges.
+
+    Only cell content is touched so legitimate uses elsewhere (prose, code-block
+    diagrams) are preserved. A cell that is *only* a status icon becomes a single
+    badge; a glyph embedded in other text is swapped for the badge inline.
+    """
+
+    icon_class = f"[{re.escape(_POSITIVE_ICONS + _NEGATIVE_ICONS + _WARNING_ICONS)}️]"
+
+    def classify(glyph: str) -> str:
+        if glyph in _POSITIVE_ICONS:
+            return "yes"
+        if glyph in _NEGATIVE_ICONS:
+            return "no"
+        return "warn"
+
+    def swap_in_cell(cell: re.Match) -> str:
+        open_tag, inner, close_tag = cell.group(1), cell.group(2), cell.group(3)
+        if not re.search(icon_class, inner):
+            return cell.group(0)
+        new_inner = re.sub(
+            icon_class,
+            lambda m: _status_badge(classify(m.group(0).rstrip("️"))),
+            inner,
+        )
+        return f"{open_tag}{new_inner}{close_tag}"
+
+    return re.sub(
+        r"(<t[dh]\b[^>]*>)(.*?)(</t[dh]>)",
+        swap_in_cell,
+        body_html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+
+
+def render_task_list_items(body_html: str) -> str:
+    """Render GFM task-list markers as clean checkboxes instead of literal [ ]/[x].
+
+    The base markdown library leaves "- [ ]" / "- [x]" as literal bracket text at
+    the start of a list item, which prints stray "[ ]" next to the bullet. Convert
+    those to a styled ASCII checkbox so checklists render cleanly in the PDF.
+    """
+
+    def convert(match: re.Match) -> str:
+        attrs, marker, rest = match.group(1), match.group(2), match.group(3)
+        checked = marker.lower() == "x"
+        state = "checked" if checked else "unchecked"
+        # The box and its tick are drawn entirely in CSS (borders + a rotated
+        # pseudo-element), so the checklist never depends on a symbol/emoji font.
+        return (
+            f'<li{attrs} class="task-item task-{state}">'
+            f'<span class="task-box"></span>{rest}'
+        )
+
+    return re.sub(
+        r"<li([^>]*)>\s*\[([ xX])\]\s?(.*?)(?=</li>)",
+        convert,
+        body_html,
+        flags=re.DOTALL,
+    )
 
 
 def clean_invisible_characters(md_text: str) -> str:
@@ -514,6 +601,58 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
       height: 1px;
       background: linear-gradient(90deg, transparent, {palette["primary"]}, transparent);
       margin: 9mm 0;
+    }}
+
+    .status-badge {{
+      display: inline-block;
+      padding: 0.05em 0.55em;
+      border-radius: 999px;
+      font-size: 0.82em;
+      font-weight: 700;
+      line-height: 1.5;
+      white-space: nowrap;
+    }}
+
+    .status-yes {{ background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }}
+    .status-no {{ background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }}
+    .status-warn {{ background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }}
+
+    th .status-badge {{ color: inherit; }}
+
+    ul:has(> li.task-item) {{ list-style: none; padding-left: 2mm; }}
+
+    li.task-item {{
+      list-style: none;
+      position: relative;
+      padding-left: 7mm;
+    }}
+
+    .task-box {{
+      position: absolute;
+      left: 0;
+      top: 0.18em;
+      width: 3.4mm;
+      height: 3.4mm;
+      border: 1.4px solid {palette["muted"]};
+      border-radius: 2px;
+      background: white;
+    }}
+
+    li.task-checked .task-box {{
+      background: {palette["primary"]};
+      border-color: {palette["primary"]};
+    }}
+
+    li.task-checked .task-box:after {{
+      content: "";
+      position: absolute;
+      left: 1.0mm;
+      top: 0.1mm;
+      width: 1.1mm;
+      height: 2.0mm;
+      border: solid white;
+      border-width: 0 1.4px 1.4px 0;
+      transform: rotate(45deg);
     }}
 
     .toc-page {{
