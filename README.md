@@ -1,6 +1,6 @@
-# 📄 Markdown to PDF Tech
+# 🛠 MarkCraft
 
-Turn Markdown, README files, and technical notes into polished, readable PDF reports — with a clean technology-style theme and optional team branding.
+Turn Markdown, README files, and technical notes into polished, readable PDF reports — with a clean technology-style theme and optional team branding. Crafted for clarity.
 
 把 Markdown 文档、README、技术笔记转换成高可读性、带科技风视觉的 PDF 报告，团队名称和 slogan 等品牌装点完全可选。
 
@@ -9,7 +9,7 @@ It works two ways: as an **Agent Skill** that any compatible AI agent can load a
 ## Install
 
 ```bash
-npx skills add Ficere/markdown-to-pdf-tech
+npx skills add Ficere/MarkCraft
 ```
 
 > Requires Node.js. Once installed, your agent auto-discovers the skill and loads it when it's relevant — no command to memorize.
@@ -22,7 +22,7 @@ npx skills add Ficere/markdown-to-pdf-tech
 **Manual install / 手动安装** — clone and drop the directory into your agent's skills folder:
 
 ```bash
-git clone https://github.com/Ficere/markdown-to-pdf-tech.git
+git clone https://github.com/Ficere/MarkCraft.git
 #   Claude Code:  ~/.claude/skills/
 #   Cursor:       .cursor/skills/
 #   Copilot:      .github/skills/
@@ -98,23 +98,23 @@ Two real case studies, each generated with this skill from a Markdown source —
 
 ## Standalone Script
 
-`scripts/tech_markdown_to_pdf.py` runs without any agent platform. The only required argument is the input file:
+`scripts/markcraft.py` runs without any agent platform. The only required argument is the input file:
 
 ```bash
-python scripts/tech_markdown_to_pdf.py report.md --output report.pdf
+python scripts/markcraft.py report.md --output report.pdf
 ```
 
 Common variations:
 
 ```bash
 # Pick a theme and density
-python scripts/tech_markdown_to_pdf.py report.md --style cyan-violet --density compact
+python scripts/markcraft.py report.md --style cyan-violet --density compact
 
 # Add optional branding
-python scripts/tech_markdown_to_pdf.py report.md --team-name "Research Ops" --slogan "Readable by design"
+python scripts/markcraft.py report.md --team-name "Research Ops" --slogan "Readable by design"
 
 # Emit HTML only (no PDF dependencies needed)
-python scripts/tech_markdown_to_pdf.py report.md --html-only
+python scripts/markcraft.py report.md --html-only
 ```
 
 Dependencies:
@@ -127,10 +127,10 @@ The script auto-installs missing Python packages where it can; if the system lac
 ## Structure
 
 ```text
-markdown-to-pdf-tech/
+MarkCraft/
 ├── SKILL.md                         # Skill entry point, read automatically by agents
 ├── scripts/
-│   └── tech_markdown_to_pdf.py      # Standalone Markdown → tech-style PDF/HTML script
+│   └── markcraft.py                 # Standalone Markdown → tech-style PDF/HTML script
 ├── references/
 │   └── style-guide.md               # Visual style, palette, and typography guide
 ├── examples/                        # Sample Markdown sources and rendered PDFs

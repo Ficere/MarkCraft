@@ -1,5 +1,5 @@
 ---
-name: markdown-to-pdf-tech
+name: markcraft
 description: "Convert Markdown documents into polished, readable PDF reports with a technology-style visual theme. Use when the user asks to turn .md, Markdown, README, technical notes, product docs, research briefs, proposals, or long-form documentation into a PDF with readable typography, code blocks, left-aligned tables, citations, Chinese/CJK support, and professional layout. Optional team name and slogan can be added as decorative branding on the cover, header, and footer."
 license: MIT
 compatibility: "Python 3.10+. Optional dependencies: markdown, pygments, weasyprint. Falls back to HTML output if PDF rendering dependencies are unavailable."
@@ -8,7 +8,7 @@ metadata:
   author: "Perplexity Computer"
 ---
 
-# Markdown to PDF Tech
+# MarkCraft
 
 ## When to Use This Skill
 
@@ -73,7 +73,7 @@ Collect or infer these inputs:
    - Do not let decoration reduce readability. When no branding is requested, a clean unbranded layout is a perfectly valid result.
 
 5. Generate PDF.
-   - Prefer the bundled script: `scripts/tech_markdown_to_pdf.py`.
+   - Prefer the bundled script: `scripts/markcraft.py`.
    - If PDF dependencies fail, produce an HTML file with the same styling and explain that it can be printed to PDF.
 
 6. QA before sharing.
@@ -87,21 +87,21 @@ Collect or infer these inputs:
 Use the bundled script from the skill directory. The only required argument is the input file:
 
 ```bash
-python scripts/tech_markdown_to_pdf.py input.md --output report.pdf
+python scripts/markcraft.py input.md --output report.pdf
 ```
 
 Useful options (team name and slogan are optional decoration):
 
 ```bash
-python scripts/tech_markdown_to_pdf.py input.md --style cyan-violet --density spacious --no-toc
-python scripts/tech_markdown_to_pdf.py input.md --team-name "Platform Team" --slogan "Build, Measure, Learn"
-python scripts/tech_markdown_to_pdf.py input.md \
+python scripts/markcraft.py input.md --style cyan-violet --density spacious --no-toc
+python scripts/markcraft.py input.md --team-name "Platform Team" --slogan "Build, Measure, Learn"
+python scripts/markcraft.py input.md \
   --team-name "Deep Potential" \
   --slogan "AI for Science" \
   --style bio-ai \
   --density normal \
   --toc
-python scripts/tech_markdown_to_pdf.py input.md --html-only
+python scripts/markcraft.py input.md --html-only
 ```
 
 ## Visual System

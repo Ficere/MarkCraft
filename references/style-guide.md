@@ -1,4 +1,4 @@
-# Tech PDF Style Guide
+# MarkCraft Style Guide
 
 ## Design Goals
 
