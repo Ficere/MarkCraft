@@ -1,6 +1,6 @@
 ---
 name: markcraft
-description: "Convert Markdown documents into polished, readable PDF reports with a technology-style visual theme. Use when the user asks to turn .md, Markdown, README, technical notes, product docs, research briefs, proposals, or long-form documentation into a PDF with readable typography, code blocks, left-aligned tables, citations, Chinese/CJK support, and professional layout. Optional team name and slogan can be added as decorative branding on the cover, header, and footer."
+description: "MarkCraft converts Markdown documents into polished, readable PDF reports with a technology-style visual theme. Use when the user asks to turn .md, Markdown, README, technical notes, product docs, research briefs, proposals, or long-form documentation into a PDF with readable typography, code blocks, left-aligned tables, citations, Chinese/CJK support, and professional layout. Optional team name and slogan can be added as decorative branding on the cover, header, and footer."
 license: MIT
 compatibility: "Python 3.10+. Optional dependencies: markdown, pygments, weasyprint. Falls back to HTML output if PDF rendering dependencies are unavailable."
 metadata:

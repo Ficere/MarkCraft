@@ -22,7 +22,7 @@ npx skills add Ficere/MarkCraft
 **Manual install / 手动安装** — clone and drop the directory into your agent's skills folder:
 
 ```bash
-git clone https://github.com/Ficere/MarkCraft.git
+git clone https://github.com/Ficere/MarkCraft.git markcraft
 #   Claude Code:  ~/.claude/skills/
 #   Cursor:       .cursor/skills/
 #   Copilot:      .github/skills/
@@ -127,7 +127,7 @@ The script auto-installs missing Python packages where it can; if the system lac
 ## Structure
 
 ```text
-MarkCraft/
+markcraft/
 ├── SKILL.md                         # Skill entry point, read automatically by agents
 ├── scripts/
 │   └── markcraft.py                 # Standalone Markdown → tech-style PDF/HTML script
