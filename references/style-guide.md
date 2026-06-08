@@ -76,3 +76,43 @@ The visual direction should communicate precision, intelligence, and engineering
 - Images: constrain to page width and avoid page breaks immediately after captions.
 - Citations and links: preserve original URLs. For final client-facing or formal reports, ensure URLs remain clickable if the renderer supports it.
 - Chinese text: prefer PingFang SC, Microsoft YaHei, Noto Sans CJK SC, Source Han Sans SC, or WenQuanYi Micro Hei.
+
+### business
+
+- Primary: `#B8860B` (dark gold)
+- Secondary: `#1C3557` (navy blue)
+- Background accent: `#1C2B3A` (charcoal)
+- Text: `#1A1A2E`
+- Muted text: `#6B7280`
+- Soft background: `#FEF9EC` (warm ivory)
+- Best for business proposals, annual reports, board decks, investor briefs, and executive-facing documents. The gold/charcoal palette signals authority and professionalism.
+
+### academic
+
+- Primary: `#1A3C6E` (academic navy)
+- Secondary: `#8B1A1A` (crimson)
+- Background accent: `#12243E` (midnight blue)
+- Text: `#0F172A`
+- Muted text: `#64748B`
+- Soft background: `#F0F4FA` (light blue-grey)
+- Best for research papers, journal-style reports, thesis summaries, white papers, and academic conference presentations. The navy/crimson palette evokes traditional academic publishing.
+
+### warm-earth
+
+- Primary: `#C2600A` (terracotta orange)
+- Secondary: `#795548` (warm brown)
+- Background accent: `#2C1A0E` (deep espresso)
+- Text: `#1C0F07`
+- Muted text: `#8D6E63`
+- Soft background: `#FFF3E0` (warm cream)
+- Best for humanities, consulting briefs, educational content, cultural reports, and any document that benefits from a warm, approachable visual tone.
+
+### forest
+
+- Primary: `#1B6B3A` (deep forest green)
+- Secondary: `#2E7D8C` (teal slate)
+- Background accent: `#0D2B1A` (dark forest)
+- Text: `#0A1F12`
+- Muted text: `#607D6A`
+- Soft background: `#E8F5E9` (light mint)
+- Best for healthcare, life sciences, ESG reports, sustainability documents, and any content where a grounded, natural visual identity is appropriate.

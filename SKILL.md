@@ -15,7 +15,7 @@ metadata:
 Use this skill when the user wants to:
 
 - Convert Markdown files into polished PDF reports, technical documents, whitepapers, SOPs, README exports, product specs, research briefs, meeting notes, or proposals.
-- Produce a technology-style PDF with dark blue, cyan, violet, slate, grid, glow, or gradient accents.
+- Produce a PDF in any of 9 visual styles: `tech`, `deep-blue`, `cyan-violet`, `slate-minimal`, `bio-ai`, `business` (gold/charcoal), `academic` (navy/crimson), `warm-earth` (terracotta/brown), `forest` (forest green/teal).
 - Optionally add a custom team name and slogan as visual decoration in the cover, header, footer, or watermark.
 - Improve readability through better typography, spacing, section hierarchy, tables, code blocks, callouts, and page breaks.
 - Preserve Chinese/CJK text quality and mixed Chinese-English technical writing.
@@ -40,7 +40,7 @@ Collect or infer these inputs:
 - `slogan` *(optional)*: short slogan, mission line, or document tagline. Decorative only.
 - `author` *(optional)*: document author written to PDF `/Author` metadata and the HTML `<meta name="author">`. Resolved in order: `--author`, `MARKCRAFT_AUTHOR` env, the `author` key in the config file (`~/.config/markcraft/config`, override path with `MARKCRAFT_CONFIG`), then the default `Perplexity Computer`. `team_name` is decorative and is never used as the author.
 - `language`: `zh`, `en`, or `mixed`. Default to `mixed`.
-- `style`: default `tech`. Optional variants: `deep-blue`, `cyan-violet`, `slate-minimal`, `bio-ai`.
+- `style`: default `tech`. Optional variants: `deep-blue`, `cyan-violet`, `slate-minimal`, `bio-ai`, `business`, `academic`, `warm-earth`, `forest`.
 - `density`: default `normal`. Optional variants: `compact` for long documents and `spacious` for executive-facing reports.
 - `toc`: default true for documents longer than 4 pages.
 

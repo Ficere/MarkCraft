@@ -113,6 +113,51 @@ STYLE_PRESETS = {
         "code_bg": "#06252D",
         "code_text": "#E6FFFA",
     },
+    # --- 新增风格 ---
+    # 商务风：深炭/金调，适合提案、年报、BP
+    "business": {
+        "primary": "#B8860B",       # 暗金
+        "secondary": "#1C3557",     # 深海蓝
+        "accent_bg": "#1C2B3A",     # 深炭蓝
+        "text": "#1A1A2E",
+        "muted": "#6B7280",
+        "soft": "#FEF9EC",          # 米白
+        "code_bg": "#1E2A38",
+        "code_text": "#F3EFE0",
+    },
+    # 学术风：深蓝/暗红，适合论文、研究报告、学位答辩
+    "academic": {
+        "primary": "#1A3C6E",       # 学术深蓝
+        "secondary": "#8B1A1A",     # 暗红
+        "accent_bg": "#12243E",     # 深夜蓝
+        "text": "#0F172A",
+        "muted": "#64748B",
+        "soft": "#F0F4FA",          # 淡蓝灰
+        "code_bg": "#1B2B4B",
+        "code_text": "#D1E8FF",
+    },
+    # 暖土色：米橙/棕，适合人文、咨询、教育类文档
+    "warm-earth": {
+        "primary": "#C2600A",       # 陶砖橙
+        "secondary": "#795548",     # 深棕
+        "accent_bg": "#2C1A0E",     # 深咖
+        "text": "#1C0F07",
+        "muted": "#8D6E63",
+        "soft": "#FFF3E0",          # 暖米
+        "code_bg": "#321C0D",
+        "code_text": "#FFE0B2",
+    },
+    # 森林绿：墨绿/青石，适合医疗、生命科学、ESG、可持续
+    "forest": {
+        "primary": "#1B6B3A",       # 深墨绿
+        "secondary": "#2E7D8C",     # 青石蓝
+        "accent_bg": "#0D2B1A",     # 深林绿
+        "text": "#0A1F12",
+        "muted": "#607D6A",
+        "soft": "#E8F5E9",          # 淡薄荷
+        "code_bg": "#0F2B1D",
+        "code_text": "#C8EDCF",
+    },
 }
 
 
@@ -403,10 +448,8 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
       padding: 18mm 14mm;
       margin: -4mm -2mm 12mm -2mm;
       color: white;
-      background:
-        linear-gradient(135deg, {palette["accent_bg"]} 0%, #111827 52%, {palette["secondary"]} 155%),
-        radial-gradient(circle at 88% 12%, {palette["primary"]}55, transparent 28%),
-        radial-gradient(circle at 12% 88%, {palette["secondary"]}44, transparent 25%);
+      background-color: {palette["accent_bg"]};
+      background: linear-gradient(135deg, {palette["accent_bg"]} 0%, #111827 60%, {palette["secondary"]}CC 100%);
       position: relative;
       page-break-after: always;
       overflow: hidden;
@@ -568,8 +611,8 @@ def css(palette: dict[str, str], density: dict[str, str], title: str, team_name:
     }}
 
     th {{
-      background: linear-gradient(90deg, {palette["accent_bg"]}, {palette["secondary"]});
-      color: white;
+      background-color: {palette["accent_bg"]};
+      color: #FFFFFF;
       font-weight: 700;
       text-align: left !important;
     }}
